@@ -1,6 +1,6 @@
 import os 
 import requests 
-
+from db_connection import save 
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -40,7 +40,7 @@ try:
 
             vids[video_id] = title 
 
-        print(vids)
+        save(playlist_id, vids)
 
     else: 
 
@@ -49,4 +49,6 @@ try:
 except requests.exceptions.RequestException as e:
 
     print(f"Something went wrong: {e}") 
+
+
 

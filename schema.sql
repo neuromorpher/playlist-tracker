@@ -1,7 +1,7 @@
 create table if not exists video(
 
     id varchar(50) primary key, 
-    title varchar(100) not null
+    title varchar(100)
 
 );
 
@@ -9,7 +9,7 @@ create table if not exists video(
 create table if not exists playlist(
 
     id varchar(50) primary key,
-    name varchar(100) not null
+    name varchar(100)
 );
 
 
