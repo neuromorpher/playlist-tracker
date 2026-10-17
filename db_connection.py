@@ -1,5 +1,5 @@
 import sqlite3 
-import os 
+import os
 from datetime import datetime 
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -8,11 +8,17 @@ db_path = os.path.join(PROJECT_ROOT, "playlist_tracker.db")
 schema_path = os.path.join(PROJECT_ROOT, "schema.sql")
 
 
+def connect_db(db_path):
+
+    conn = sqlite3.connect(db_path) 
+    conn.execute("PRAGMA foreign_keys = ON")
+
+    return conn
+
+
 def init_database(db_path, schema_path):
 
-
-    conn = sqlite3.connect(db_path)
-    conn.execute("PRAGMA foreign_keys = ON")
+    conn = connect_db(db_path) 
 
 
     try:
@@ -20,6 +26,7 @@ def init_database(db_path, schema_path):
         with open(schema_path, 'r') as f:
 
             schema_sql = f.read()
+            
 
             conn.executescript(schema_sql)
             print("Schema executed successfully.")
@@ -34,8 +41,6 @@ def init_database(db_path, schema_path):
         conn.close()
 
 
-init_database(db_path, schema_path)
-
 
 def save(playlistId, vids:dict):
 
@@ -45,8 +50,7 @@ def save(playlistId, vids:dict):
     # 4. Loop over vids(dict) with one statement for video and one for playlist_videoper video []
     # 5. Commit [/]
 
-    conn = sqlite3.connect(db_path) 
-    conn.execute("PRAGMA foreign_keys = ON")
+    conn = connect_db(db_path)
 
     try: 
 
@@ -125,8 +129,42 @@ def save(playlistId, vids:dict):
 
     finally:
 
+        conn.close()
+
+def view_db():
+
+    conn = connect_db(db_path)
+
+    try:
+
+        cursor = conn.execute(""" select video_id, video.title, playlist_id, last_seen, gone_missing
+
+from video join playlist_video on video.id = playlist_video.video_id
+
+order by playlist_id, gone_missing desc;
+
+                
+                """)
+
+        rows = cursor.fetchall() 
+
+        for row in rows:
+
+            print(row)
+
+
+    except sqlite3.Error as e:
+
+        print(f"Error: {e}")
+
+       
+    finally:
+
         conn.close() 
 
-
+if __name__ == "__main__":
+    
+    init_database(db_path, schema_path)
+    
 
 
