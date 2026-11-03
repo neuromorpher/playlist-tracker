@@ -37,7 +37,8 @@ def fetch_and_save(playlist_id):
             save(playlist_id, vids)
 
 
-        else: 
+        else:
+            # print(response.text) 
 
             print(f"An error occurred during request: {response.status_code}")
 

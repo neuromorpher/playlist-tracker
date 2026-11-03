@@ -115,10 +115,6 @@ def save(playlistId, vids:dict):
 
                 conn.execute(scrp4, (playlistId, videoId, now)) 
 
-
-
-
-
         conn.commit()
 
 
@@ -137,6 +133,14 @@ def view_db():
 
     try:
 
+        missing_counts = dict(conn.execute("select playlist_id, count(gone_missing) from playlist_video group by playlist_id;").fetchall()) 
+
+
+        video_count = conn.execute("select count(*) from playlist_video group by playlist_id;").fetchone()[0]
+
+        # print(f"\n\n Video Count: {row[0]}") 
+
+
         cursor = conn.execute(""" select video_id, video.title, playlist_id, last_seen, gone_missing
 
 from video join playlist_video on video.id = playlist_video.video_id
@@ -148,11 +152,31 @@ order by playlist_id, gone_missing desc;
 
         rows = cursor.fetchall() 
 
-        for row in rows:
+        last_pl_id = None
+        last_missing = None 
+        for video_id, title, playlist_id, last_seen, gone_missing in rows: 
 
-            print(row)
+            if playlist_id != last_pl_id:
 
+                last_pl_id = playlist_id
+                last_missing = None 
+                print() 
+                print(f"=== Playlist {playlist_id} === ({video_count} videos, {missing_counts[playlist_id]} missing)")
 
+            is_missing = gone_missing is not None 
+
+            if is_missing != last_missing:
+
+                print("\tMISSING" if is_missing else "\tAVAILABLE")
+                last_missing = is_missing
+            if is_missing:
+
+                print(f"✗ {title}\tgone since {gone_missing}")
+            else:
+
+                print(f"✓ {title}\tlast seen {last_seen}")
+
+                     
     except sqlite3.Error as e:
 
         print(f"Error: {e}")
