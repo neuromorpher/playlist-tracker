@@ -59,12 +59,12 @@ def save(playlistId, vids:dict):
 
         scrp1 = """
 
-        insert into playlist(id)
-        values(?)
-        on conflict (id) do nothing; 
+        insert into playlist(id, last_fetched)
+        values(?, ?)
+        on conflict (id) do update set last_fetched = excluded.last_fetched;
 
         """
-        conn.execute(scrp1, (playlistId, ))
+        conn.execute(scrp1, (playlistId, now))
 
 
         for videoId, title in vids.items():
@@ -133,10 +133,12 @@ def view_db():
 
     try:
 
+        last_fetched = dict(conn.execute("select id, last_fetched from playlist;").fetchall())
+
         missing_counts = dict(conn.execute("select playlist_id, count(gone_missing) from playlist_video group by playlist_id;").fetchall()) 
 
 
-        video_count = conn.execute("select count(*) from playlist_video group by playlist_id;").fetchone()[0]
+        video_counts = dict(conn.execute("select playlist_id, count(*) from playlist_video group by playlist_id;").fetchall())
 
         # print(f"\n\n Video Count: {row[0]}") 
 
@@ -153,7 +155,8 @@ order by playlist_id, gone_missing desc;
         rows = cursor.fetchall() 
 
         last_pl_id = None
-        last_missing = None 
+        last_missing = None
+
         for video_id, title, playlist_id, last_seen, gone_missing in rows: 
 
             if playlist_id != last_pl_id:
@@ -161,7 +164,7 @@ order by playlist_id, gone_missing desc;
                 last_pl_id = playlist_id
                 last_missing = None 
                 print() 
-                print(f"=== Playlist {playlist_id} === ({video_count} videos, {missing_counts[playlist_id]} missing)")
+                print(f"=== Playlist {playlist_id} === ({video_counts[playlist_id]} videos, {missing_counts[playlist_id]} missing, checked {last_fetched[playlist_id][:10] if last_fetched[playlist_id] is not None else 'never'})")
 
             is_missing = gone_missing is not None 
 
